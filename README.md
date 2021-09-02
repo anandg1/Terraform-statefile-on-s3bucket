@@ -9,9 +9,9 @@ Let me demonstrate a simple way to use S3 backend to store your terraform states
 When a terraform stack is deployed, terraform creates a state file. The state file keeps track of what resources have been deployed, all parameters, IDs, dependencies, failures and outputs defined in your stack.
 The state file (JSON) would be committed to the repository containing your terraform stack code.
 This created a few problems:
-1) Concurrency: If 2 or more developers are working in the stack, they won’t see the other state until it’s pushed to the repository
-2)Automated Deployment: A CI tool that deploys the stack automatically would need to commit the new state file to the repository
-3) Easily corruptible: In case of a merge conflict or human error, the state file can be corrupted or gone. If this happens, the stack becomes unmaintainable, resources need to be manually/individually imported or cleaned and then re-created with terraform
+- Concurrency: If 2 or more developers are working in the stack, they won’t see the other state until it’s pushed to the repository.
+- Automated Deployment: A CI tool that deploys the stack automatically would need to commit the new state file to the repository
+- Easily corruptible: In case of a merge conflict or human error, the state file can be corrupted or gone. If this happens, the stack becomes unmaintainable, resources need to be manually/individually imported or cleaned and then re-created with terraform
 
 Inorder to solve all these problems, we are going to use an AWS S3 bucket to store the states remotely.
 
@@ -58,6 +58,8 @@ terraform {
         }
 }
 ```
+> Here, key is the /path/to/the/state/file/terraform.tfstate in s3 bucket
+
 Now, the configurations need reinitialization as we have made a change. So we have to run : 
 ```sh
 terraform init
