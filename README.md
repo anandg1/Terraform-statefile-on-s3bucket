@@ -64,7 +64,7 @@ resource "aws_s3-bucket" "remote_s3_bucket" {
 ### 2) Creating a DynamoDB
 
 Now, we need to create a [DynamoDB](https://www.youtube.com/watch?v=sI-zciHAh-4) using the terraform file 'dynamo.tf' to power terraform to lock your state for all operations that could write state. This prevents multiple people attempting to make change to the same file which could result in a possible data loss or corruption. 
-> You can disable state locking for most commands with the -lock flag but it is not recommended.
+
 
 ```sh
 resource "aws_dynamodb_table" "dynamodb-tf-state-lock" {
@@ -80,6 +80,7 @@ resource "aws_dynamodb_table" "dynamodb-tf-state-lock" {
 depends_on              = [aws_s3_bucket.remote_s3_bucket]
 }
 ```
+> You can disable state locking for most commands with the -lock flag but it is not recommended.
 
 ### 3) Setting up the Backend
 
