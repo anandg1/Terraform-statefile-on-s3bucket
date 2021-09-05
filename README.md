@@ -40,13 +40,50 @@ Inorder to solve all these problems, we are going to use an AWS S3 bucket to sto
 ```
 
 
-## Procedure:
+## Steps:
 
-I have already created an s3 bucket storage named 'tf.state-bucket' with 'bucket versioning' enabled.
+### 1) Creating an s3 bucket
+
+I have already created an s3 bucket storage named 'tf.state-bucket' with 'bucket versioning' enabled using the terraform file s3.tf.
+
+```sh
+resource "aws_s3-bucket" "remote_s3_bucket" {
+        bucket          =       "tf.state-bucket"
+        acl             =       "private"
+    versioning {
+        enabled         =       true
+     }
+    tags = {
+        Name            =       "tf.state-buket"
+    }
+}
+```
 
 ![alt text](https://github.com/anandg1/Terraform-statefile-on-s3bucket/blob/main/01.jpg)
 
-Now, add the following code in your main.tf (or any other) terraform file in the working directory.
+### 2) Creating a DynamoDB
+
+Now, we need to create a [DynamoDB](https://www.youtube.com/watch?v=sI-zciHAh-4) using the terraform file 'dynamo.tf' to power terraform to lock your state for all operations that could write state. This prevents multiple people attempting to make change to the same file which could result in a possible data loss or corruption. 
+> You can disable state locking for most commands with the -lock flag but it is not recommended.
+
+```sh
+resource "aws_dynamodb_table" "dynamodb-tf-state-lock" {
+        name            = "terraform-lock"
+        hash_key        = "LockID"
+        read_capacity   = 5
+        write_capacity  = 5
+
+  attribute {
+        name            = "LockID"
+        type            = "S"
+  }
+depends_on              = [aws_s3_bucket.remote_s3_bucket]
+}
+```
+
+### 3) Setting up the Backend
+
+Now, add the following code in your main.tf terraform file in the working directory.
 
 ```sh
 terraform {
@@ -55,10 +92,16 @@ terraform {
         key         = "terraform.tfstate"
         region      = "ap-south-1"
         encrypt     = false
+        dynamodb_table = "terraform-lock"
         }
 }
 ```
-> Here, key is the /path/to/the/state/file/terraform.tfstate in s3 bucket
+> Key is the /path/to/the/state/file/terraform.tfstate in s3 bucket.
+-  After deploying, terraform will create a state file called 'terraform.tfstate' in the bucket 'tf.state-bucket'.
+-  The parameter dynamodb_table above is used for locking and consistency checking, to prevent concurrent operations in a single workspace. 
+
+
+### 4) Ready to go
 
 Now, the configurations need reinitialization as we have made a change. So we have to run : 
 ```sh
